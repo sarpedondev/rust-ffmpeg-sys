@@ -193,9 +193,10 @@ fn switch(configure: &mut Command, feature: &str, name: &str) {
 }
 
 fn get_ffmpeg_target_os() -> String {
-    let cargo_target_os = env::var("CARGO_CFG_TARGET_OS").unwrap();
+    let cargo_target_os = env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
     match cargo_target_os.as_str() {
-        "ios" => "darwin".to_string(),
+        "ios" | "macos" => "darwin".to_string(),
+        "windows" => "mingw32".to_string(),
         _ => cargo_target_os,
     }
 }
@@ -422,8 +423,7 @@ fn build(sysroot: Option<&str>) -> io::Result<()> {
     configure.arg("--enable-static");
     configure.arg("--disable-shared");
     // windows includes threading in the standard library
-    #[cfg(not(target_env = "msvc"))]
-    {
+    if env::var("CARGO_CFG_TARGET_OS").unwrap_or_default() != "windows" {
         configure.arg("--enable-pthreads");
     }
 
